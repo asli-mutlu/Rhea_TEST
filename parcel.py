@@ -19,8 +19,7 @@ import numpy as np
 from scipy.special import comb
 
 # Parcel characteristics for both price estimation methods (regression and kriging)
-REGR_CHARS = ["AGE", "BATHROOMS", "HOUSESIZE", "LOTSIZE", "NEWHOME", "POSTFIRM",
-              "FIRSTROW", "DISTAMEN", "DISTCBD", "DISTHWY", "DISTPARK", "PRICE_REGR"]
+REGR_CHARS = ["AGE", "BEDROOMS" ,"HOUSESIZE", "LOTSIZE", "DISTAMEN", "DISTCBD", "PRICE_REGR"]
 KRIGING_CHARS = ["COORDS_X", "COORDS_Y", "AGE", "HOUSESIZE", "LOTSIZE",
                  "BEDROOMS", "PRICE_KRIGING"]
 
@@ -51,22 +50,17 @@ class Parcel():
         # Extract relevant parcel characteristics
         self.unique_id = parcel_chars["ID"]
         self.dflood_100 = parcel_chars.get("DFLOOD100")
-        self.dflood_500 = parcel_chars.get("DFLOOD500")
         # Get flood probability from flood plain dummies
         self.flood_prob = 0
         if self.dflood_100:
             # Check if 1:100 flood plain exists in dataset
             self.flood_prob += 0.01 * self.dflood_100
-        if self.dflood_500:
-            # Check if 1:500 flood plain exists in dataset
-            self.flood_prob += 0.002 * self.dflood_500
+
 
         # Read parcel characteristics for price estimation
         if self.model.price_method == "Regression":
-            (self.age, self.n_bathrooms, self.house_size,
-             self.lot_size, self.new_home, self.post_firm,
-             self.coastal_front, self.dist_amen, self.dist_CBD,
-             self.dist_hwy, self.dist_park, self.price) = parcel_chars[REGR_CHARS]
+            (self.age, self.n_bedrooms, self.house_size,
+             self.lot_size, self.dist_amen, self.dist_CBD, self.price) = parcel_chars[REGR_CHARS]
         elif self.model.price_method == "Regression kriging":
             (x, y, self.age, self.house_size, self.lot_size,
              self.n_bedrooms, self.price) = parcel_chars[KRIGING_CHARS]
@@ -122,19 +116,13 @@ class Parcel():
 
         if method == "Regression":
             # Return relevant property characteristics for regression
-            prop_chars = [self.n_bathrooms, self.n_bathrooms**2,
+            prop_chars = [self.n_bedrooms, self.n_bedrooms**2,
                           self.age, self.age**2,
                           self.house_size, 1e-4*self.house_size**2,
-                          self.lot_size, self.lot_size**2,
-                          self.new_home,
-                          self.post_firm, 
+                          self.lot_size, self.lot_size**2, 
                           self.dflood_100,
-                          self.dflood_500,
-                          self.coastal_front,
                           np.log(self.dist_amen),
-                          np.log(self.dist_CBD),
-                          np.log(self.dist_hwy),
-                          np.log(self.dist_park)]
+                          np.log(self.dist_CBD)]
         
         elif method == "Regression kriging":
             # Return relevant property characteristics for regression kriging

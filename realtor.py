@@ -58,11 +58,9 @@ class Realtor(Agent):
         method = self.model.price_method
         if method == "Regression":
             # Use regression coefficients from Bin et al. (2008)
-            self.regression_coefs = np.array([11.337, 0.108, -0.011, -0.01,
-                                              0.000094, 0.001, -0.00011, 0.03,
-                                              0.00019, -0.059, -0.022, -0.078,
-                                              -0.062, 0.314, -0.106, -0.00038,
-                                              0.005, -0.001])
+            self.regression_coefs = np.array([13.6615, 0.012, 0.002, -0.016,
+                                              0.000099, 0.005, -0.000004, 0.0007,
+                                              -0.00000005, -0.115, -0.0036, -0.2240])
         elif method == "Regression kriging":
             # Initialize regression kriging model based on initial prices
             Y = np.array([prop.price for prop in self.model.parcels])

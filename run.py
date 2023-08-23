@@ -30,7 +30,7 @@ price_method = "Regression"
 # Buyer utility method ("EU_v1", "EU_v2", "PTnull", "PT0", "PT1" or "PT3")
 buyer_util_method = "EU_v1"
 # CSV file with parcel characteristics (Beaufort or Greenville)
-parcel_file = "Data/Parcel_chars_Beaufort.csv"
+parcel_file = "Data/Parcel_chars_Maastricht.csv"
 
 # Check compatibility of price method, utility function and parcel data
 if parcel_file.endswith("Beaufort.csv") and buyer_util_method != "EU_v1":
@@ -51,6 +51,8 @@ if parcel_file.endswith("Beaufort.csv"):
     F_sale = (0.25, 0.02)
 elif parcel_file.endswith("Greenville.csv"):
     F_sale = (0.1, 0.01)
+elif parcel_file.endswith("Maastricht.csv"):
+    F_sale = (0.25, 0.02)
 
 for i, random_seed in enumerate(random_seeds):
     print("Run num", i+1, "with random seed", random_seed)

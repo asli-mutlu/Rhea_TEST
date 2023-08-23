@@ -76,14 +76,14 @@ class Household(Agent):
             self.prefs = {"spat": pref_spat,
                           "comp": 1 - pref_spat,
                           "coast": pref_amen}
-        else:
-            self.gamma = self.model.rng_init.normal(NEIGHBORHOOD_PREFS[0],
-                                                    NEIGHBORHOOD_PREFS[1])
-            self.prefs = {"age": 28.9,
-                          "house_size": 53.8,
-                          "lot_size": 0.1,
-                          "n_bedrooms": 0.3,
-                          "neighborhood": 16.9 * self.gamma}
+        # else:
+        #     self.gamma = self.model.rng_init.normal(NEIGHBORHOOD_PREFS[0],
+        #                                             NEIGHBORHOOD_PREFS[1])
+        #     self.prefs = {"age": 28.9,
+        #                   "house_size": 53.8,
+        #                   "lot_size": 0.1,
+        #                   "n_bedrooms": 0.3,
+        #                   "neighborhood": 16.9 * self.gamma}
 
         # Risk perception bias
         self.RP_bias = self.model.rng_init.normal(RP_bias[0], RP_bias[1])
@@ -171,98 +171,98 @@ class Household(Agent):
             # Compute expected utility from U_flood and U_no_flood
             U = np.round(RP * U_flood + (1 - RP) * U_no_flood, -3)
 
-        else:
-            # Compute utility for this property as weighted function of normalized
-            # property characteristics (see de Koning et al., 2017 (Table 1))
-            chars = np.array([[prop.age_norm,
-                               prop.house_size_norm,
-                               prop.lot_size_norm,
-                               prop.n_bedrooms_norm,
-                               prop.resid_norm] for prop in properties])
-            U_houses = chars @ np.array(list(self.prefs.values()))
-            # Flood scenarios (N=0, N=1, N=2, N=3)
-            N_floods = np.array([0, 1, 2, 3])
-            # Flood probabilities for given properties
-            flood_probs = np.array([prop.P_floods for prop in properties])
+        # else:
+        #     # Compute utility for this property as weighted function of normalized
+        #     # property characteristics (see de Koning et al., 2017 (Table 1))
+        #     chars = np.array([[prop.age_norm,
+        #                        prop.house_size_norm,
+        #                        prop.lot_size_norm,
+        #                        prop.n_bedrooms_norm,
+        #                        prop.resid_norm] for prop in properties])
+        #     U_houses = chars @ np.array(list(self.prefs.values()))
+        #     # Flood scenarios (N=0, N=1, N=2, N=3)
+        #     N_floods = np.array([0, 1, 2, 3])
+        #     # Flood probabilities for given properties
+        #     flood_probs = np.array([prop.P_floods for prop in properties])
 
-            if method == "EU_v2":
-                # Compute utilities for all flood scenarios
-                U_floods = (U_houses - 0.25 * np.outer(N_floods, U_houses)).T
-                # Utility is sum over flood scenarios weighed by their probability
-                U = np.sum(np.multiply(U_floods, flood_probs), axis=1)
+        #     if method == "EU_v2":
+        #         # Compute utilities for all flood scenarios
+        #         U_floods = (U_houses - 0.25 * np.outer(N_floods, U_houses)).T
+        #         # Utility is sum over flood scenarios weighed by their probability
+        #         U = np.sum(np.multiply(U_floods, flood_probs), axis=1)
 
-            elif method == "PTnull":
-                # Compute utility for all flood scenarios
-                U_floods = (U_houses - (0.25 * LOSS_AVERSION *
-                                        np.outer(N_floods, U_houses))).T
-                # Gamma parameter for subjective weighing of probabilities
-                gamma = np.ones((U_floods.shape)) * 0.65
-                # Lower gamma for gains, higher for losses
-                gamma[U_floods > 0] = 0.61
-                gamma[U_floods < 0] = 0.69
-                # Compute subjective weighted probability
-                weighted_probs = (flood_probs**gamma /
-                                  (flood_probs**gamma +
-                                   (1-flood_probs)**gamma)**(1/gamma))
-                # If P = 0, subjective weighted probability = 0
-                weighted_probs[flood_probs == 0] = 0
-                # Compute subjectively weighed utilities
-                U = np.sum(np.multiply(U_floods, weighted_probs), axis=1)
+        #     elif method == "PTnull":
+        #         # Compute utility for all flood scenarios
+        #         U_floods = (U_houses - (0.25 * LOSS_AVERSION *
+        #                                 np.outer(N_floods, U_houses))).T
+        #         # Gamma parameter for subjective weighing of probabilities
+        #         gamma = np.ones((U_floods.shape)) * 0.65
+        #         # Lower gamma for gains, higher for losses
+        #         gamma[U_floods > 0] = 0.61
+        #         gamma[U_floods < 0] = 0.69
+        #         # Compute subjective weighted probability
+        #         weighted_probs = (flood_probs**gamma /
+        #                           (flood_probs**gamma +
+        #                            (1-flood_probs)**gamma)**(1/gamma))
+        #         # If P = 0, subjective weighted probability = 0
+        #         weighted_probs[flood_probs == 0] = 0
+        #         # Compute subjectively weighed utilities
+        #         U = np.sum(np.multiply(U_floods, weighted_probs), axis=1)
 
-            elif method == "PT0":
-                # Compute utility for all flood scenarios
-                U_floods = (-0.25 * LOSS_AVERSION * np.outer(N_floods, U_houses)).T
-                # No floods expected: gamma always lower than or equal to zero
-                gamma = np.ones((U_floods.shape)) * 0.65
-                gamma[U_floods < 0] = 0.69
-                # Compute subjective weighted probability
-                weighted_probs = (flood_probs**gamma /
-                                  (flood_probs**gamma +
-                                   (1-flood_probs)**gamma)**(1/gamma))
-                # If P = 0, subjective weighted probability = 0
-                weighted_probs[flood_probs == 0] = 0
-                # Compute subjectively weighed utilities
-                U = U_houses + np.sum(np.multiply(U_floods, weighted_probs), axis=1)
+        #     elif method == "PT0":
+        #         # Compute utility for all flood scenarios
+        #         U_floods = (-0.25 * LOSS_AVERSION * np.outer(N_floods, U_houses)).T
+        #         # No floods expected: gamma always lower than or equal to zero
+        #         gamma = np.ones((U_floods.shape)) * 0.65
+        #         gamma[U_floods < 0] = 0.69
+        #         # Compute subjective weighted probability
+        #         weighted_probs = (flood_probs**gamma /
+        #                           (flood_probs**gamma +
+        #                            (1-flood_probs)**gamma)**(1/gamma))
+        #         # If P = 0, subjective weighted probability = 0
+        #         weighted_probs[flood_probs == 0] = 0
+        #         # Compute subjectively weighed utilities
+        #         U = U_houses + np.sum(np.multiply(U_floods, weighted_probs), axis=1)
 
-            elif method == "PT1":
-                # Compute utility for all flood scenarios
-                U_floods = -0.25 * np.outer(N_floods, U_houses)
-                # Subtract flood scenario N=1 (reference point)
-                U_floods = (U_floods - U_floods[1,:]).T
-                # Only apply loss aversion to scenarios where loss is expected
-                U_floods[U_floods < 0] = U_floods[U_floods < 0] * LOSS_AVERSION
-                # No floods expected: gamma always lower than or equal to zero
-                gamma = np.ones((U_floods.shape)) * 0.65
-                gamma[U_floods > 0] = 0.61
-                gamma[U_floods < 0] = 0.69
-                # Compute subjective weighted probability
-                weighted_probs = (flood_probs**gamma /
-                                  (flood_probs**gamma +
-                                   (1-flood_probs)**gamma)**(1/gamma))
-                # If P = 0, subjective weighted probability = 0
-                weighted_probs[flood_probs == 0] = 0
-                # Compute subjectively weighed utilities
-                U = np.sum(np.multiply(U_floods, weighted_probs), axis=1)
+        #     elif method == "PT1":
+        #         # Compute utility for all flood scenarios
+        #         U_floods = -0.25 * np.outer(N_floods, U_houses)
+        #         # Subtract flood scenario N=1 (reference point)
+        #         U_floods = (U_floods - U_floods[1,:]).T
+        #         # Only apply loss aversion to scenarios where loss is expected
+        #         U_floods[U_floods < 0] = U_floods[U_floods < 0] * LOSS_AVERSION
+        #         # No floods expected: gamma always lower than or equal to zero
+        #         gamma = np.ones((U_floods.shape)) * 0.65
+        #         gamma[U_floods > 0] = 0.61
+        #         gamma[U_floods < 0] = 0.69
+        #         # Compute subjective weighted probability
+        #         weighted_probs = (flood_probs**gamma /
+        #                           (flood_probs**gamma +
+        #                            (1-flood_probs)**gamma)**(1/gamma))
+        #         # If P = 0, subjective weighted probability = 0
+        #         weighted_probs[flood_probs == 0] = 0
+        #         # Compute subjectively weighed utilities
+        #         U = np.sum(np.multiply(U_floods, weighted_probs), axis=1)
 
-            elif method == "PT3":
-                # Compute utility for all flood scenarios
-                U_floods = -0.25 * np.outer(N_floods, U_houses)
-                # Subtract flood scenario N=1 (reference point)
-                U_floods = (U_floods - U_floods[3,:]).T
-                # Only apply loss aversion to scenarios where loss is expected
-                U_floods[U_floods < 0] = U_floods[U_floods < 0] * LOSS_AVERSION
-                # No floods expected: gamma always lower than or equal to zero
-                gamma = np.ones((U_floods.shape)) * 0.65
-                gamma[U_floods > 0] = 0.61
-                gamma[U_floods < 0] = 0.69
-                # Compute subjective weighted probability
-                weighted_probs = (flood_probs**gamma /
-                                  (flood_probs**gamma +
-                                   (1-flood_probs)**gamma)**(1/gamma))
-                # If P = 0, subjective weighted probability = 0
-                weighted_probs[flood_probs == 0] = 0
-                # Compute subjectively weighed utilities
-                U = np.sum(np.multiply(U_floods, weighted_probs), axis=1)
+        #     elif method == "PT3":
+        #         # Compute utility for all flood scenarios
+        #         U_floods = -0.25 * np.outer(N_floods, U_houses)
+        #         # Subtract flood scenario N=1 (reference point)
+        #         U_floods = (U_floods - U_floods[3,:]).T
+        #         # Only apply loss aversion to scenarios where loss is expected
+        #         U_floods[U_floods < 0] = U_floods[U_floods < 0] * LOSS_AVERSION
+        #         # No floods expected: gamma always lower than or equal to zero
+        #         gamma = np.ones((U_floods.shape)) * 0.65
+        #         gamma[U_floods > 0] = 0.61
+        #         gamma[U_floods < 0] = 0.69
+        #         # Compute subjective weighted probability
+        #         weighted_probs = (flood_probs**gamma /
+        #                           (flood_probs**gamma +
+        #                            (1-flood_probs)**gamma)**(1/gamma))
+        #         # If P = 0, subjective weighted probability = 0
+        #         weighted_probs[flood_probs == 0] = 0
+        #         # Compute subjectively weighed utilities
+        #         U = np.sum(np.multiply(U_floods, weighted_probs), axis=1)
 
         return U
 

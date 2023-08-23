@@ -57,30 +57,34 @@ class Realtor(Agent):
         # Initialize price estimation model
         method = self.model.price_method
         if method == "Regression":
-            # Use regression coefficients from Bin et al. (2008)
-            self.regression_coefs = np.array([13.6615, 0.012, 0.002, -0.016,
-                                              0.000099, 0.005, -0.000004, 0.0007,
-                                              -0.00000005, -0.115, -0.0036, -0.2240])
-        elif method == "Regression kriging":
-            # Initialize regression kriging model based on initial prices
-            Y = np.array([prop.price for prop in self.model.parcels])
-            X = np.array([prop.get_prop_chars(method) for prop in self.model.parcels])
-            coords = np.array([prop.coords for prop in self.model.parcels])
+            # Use regression coefficients from Bin et al. (2008)---> UPDATED TO DUTCH DATA
+            # The regression specification as follows:
+            # reg ln_price rooms age age**2 house_size house_size**2 lot_size lot_size**2 
+            # in_quality parking dflood_100 dist_amen dist_CBD i.year,r (the coefficients of the Year FE is not specified below)
+    
+            self.regression_coefs = np.array([11.623, 0.007, -0.004, 0.00002,
+                                              0.006, -0.000004, 0.0006, -0.00000005,
+                                              0.076, 0.105, -0.155, -0.009, -0.195])
+        # elif method == "Regression kriging":
+        #     # Initialize regression kriging model based on initial prices
+        #     Y = np.array([prop.price for prop in self.model.parcels])
+        #     X = np.array([prop.get_prop_chars(method) for prop in self.model.parcels])
+        #     coords = np.array([prop.coords for prop in self.model.parcels])
 
-            # Fit regression model
-            m_regression = LinearRegression(fit_intercept=True)
-            m_regression.fit(X, np.log(Y))
-            results = sm.OLS(np.log(Y), sm.add_constant(X)).fit()
-            # Save coefficients
-            self.regression_coefs = np.append(m_regression.intercept_,
-                                              m_regression.coef_)
+        #     # Fit regression model
+        #     m_regression = LinearRegression(fit_intercept=True)
+        #     m_regression.fit(X, np.log(Y))
+        #     results = sm.OLS(np.log(Y), sm.add_constant(X)).fit()
+        #     # Save coefficients
+        #     self.regression_coefs = np.append(m_regression.intercept_,
+        #                                       m_regression.coef_)
 
-            # Krige residuals from regression model
-            with suppress_stdout():  # Avoid printing output from PyKrige library
-                self.m_kriging = RegressionKriging(regression_model=m_regression,
-                                                   n_closest_points=10,
-                                                   variogram_model="spherical")
-                self.m_kriging.fit(X, coords, np.log(Y))
+        #     # Krige residuals from regression model
+        #     with suppress_stdout():  # Avoid printing output from PyKrige library
+        #         self.m_kriging = RegressionKriging(regression_model=m_regression,
+        #                                            n_closest_points=10,
+        #                                            variogram_model="spherical")
+        #         self.m_kriging.fit(X, coords, np.log(Y))
 
         else:
             raise ValueError("Invalid price estimation method")
@@ -115,20 +119,20 @@ class Realtor(Agent):
             # Update regression coefficients
             self.regression_coefs = results.params
 
-            # For regression kriging: also krige residuals
-            if method == "Regression kriging":
-                # Fit regression model
-                m_regression = LinearRegression(fit_intercept=True)
-                m_regression.fit(X, np.log(Y))
-                # Krige residuals from regression model
-                with suppress_stdout():  # Avoid printing output from PyKrige library
-                    predict = m_regression.predict(X)
-                    resid = np.log(Y) - predict
-                    self.m_kriging = RegressionKriging(regression_model=m_regression,
-                                                       n_closest_points=10,
-                                                       variogram_model="spherical")
-                    coords = np.array([prop.coords for prop in transactions])
-                    self.m_kriging.fit(X, coords, resid)
+            # # For regression kriging: also krige residuals
+            # if method == "Regression kriging":
+            #     # Fit regression model
+            #     m_regression = LinearRegression(fit_intercept=True)
+            #     m_regression.fit(X, np.log(Y))
+            #     # Krige residuals from regression model
+            #     with suppress_stdout():  # Avoid printing output from PyKrige library
+            #         predict = m_regression.predict(X)
+            #         resid = np.log(Y) - predict
+            #         self.m_kriging = RegressionKriging(regression_model=m_regression,
+            #                                            n_closest_points=10,
+            #                                            variogram_model="spherical")
+            #         coords = np.array([prop.coords for prop in transactions])
+            #         self.m_kriging.fit(X, coords, resid)
         else:
             # Check if not already using full history
             if not T - steps <= 0:
@@ -154,12 +158,12 @@ class Realtor(Agent):
         if method == "Regression":
             # Compute hedonic prices from estimated regression coefficients
             H = sm.add_constant(X) @ self.regression_coefs
-        elif method == "Regression kriging":
-            # Regression part
-            predict = sm.add_constant(X) @ self.regression_coefs
-            # Kriging part
-            coords = np.array([prop.coords for prop in props])
-            H = self.m_kriging.krige_residual(coords) + predict
+        # elif method == "Regression kriging":
+        #     # Regression part
+        #     predict = sm.add_constant(X) @ self.regression_coefs
+        #     # Kriging part
+        #     coords = np.array([prop.coords for prop in props])
+        #     H = self.m_kriging.krige_residual(coords) + predict
 
         else:
             raise ValueError("Invalid price estimation method")

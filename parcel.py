@@ -19,14 +19,14 @@ import numpy as np
 from scipy.special import comb
 
 # Parcel characteristics for both price estimation methods (regression and kriging)
-REGR_CHARS = ["AGE", "BEDROOMS" ,"HOUSESIZE", "LOTSIZE", "DISTAMEN", "DISTCBD", "PRICE_REGR"]
-KRIGING_CHARS = ["COORDS_X", "COORDS_Y", "AGE", "HOUSESIZE", "LOTSIZE",
-                 "BEDROOMS", "PRICE_KRIGING"]
+REGR_CHARS = ["AGE", "ROOMS" ,"HOUSESIZE","INQUALITY","PARKING" "LOTSIZE", "DISTAMEN", "DISTCBD", "PRICE_REGR"]
+# KRIGING_CHARS = ["COORDS_X", "COORDS_Y", "AGE", "HOUSESIZE", "LOTSIZE",
+#                  "ROOMS", "PRICE_KRIGING"]
 
 # Parcel characteristics used in buyer utility functions
 EU_V1_CHARS = ["PROXAMEN", "DISTCBD"]
-EU_V2_CHARS = PT_CHARS = ["AGEnorm", "HOUSESIZEnorm", "LOTSIZEnorm",
-                          "BEDROOMSnorm", "RESIDnorm"]
+# EU_V2_CHARS = PT_CHARS = ["AGEnorm", "HOUSESIZEnorm", "LOTSIZEnorm",
+#                           "BEDROOMSnorm", "RESIDnorm"]
 
 # Other constants
 N_FLOODS = np.array([0,1,2,3])  # Flood experience scenarios (number of floods)
@@ -59,12 +59,13 @@ class Parcel():
 
         # Read parcel characteristics for price estimation
         if self.model.price_method == "Regression":
-            (self.age, self.n_bedrooms, self.house_size,
-             self.lot_size, self.dist_amen, self.dist_CBD, self.price) = parcel_chars[REGR_CHARS]
-        elif self.model.price_method == "Regression kriging":
-            (x, y, self.age, self.house_size, self.lot_size,
-             self.n_bedrooms, self.price) = parcel_chars[KRIGING_CHARS]
-            self.coords = (x, y)
+            (self.age, self.n_rooms, self.house_size,
+             self.lot_size, self.in_quality, self.parking, self.dist_amen, 
+             self.dist_CBD, self.price) = parcel_chars[REGR_CHARS]
+        # elif self.model.price_method == "Regression kriging":
+        #     (x, y, self.age, self.house_size, self.lot_size,
+        #      self.n_bedrooms, self.price) = parcel_chars[KRIGING_CHARS]
+        #     self.coords = (x, y)
         else:
             raise ValueError("Invalid price method. Please specify "
                              "'Regression' or 'Regression kriging'")
@@ -73,17 +74,17 @@ class Parcel():
         util_method = self.model.buyer_util_method
         if util_method == "EU_v1":
             self.prox_amen, self.dist_CBD = parcel_chars[EU_V1_CHARS]
-        elif util_method == "EU_v2":
-            (self.age_norm, self.house_size_norm, self.lot_size_norm,
-             self.n_bedrooms_norm, self.resid_norm) = parcel_chars[EU_V2_CHARS]
-            # Get probability of experiencing one or more floods during residence
-            self.P_floods = self.n_flood_prob()
+        # elif util_method == "EU_v2":
+        #     (self.age_norm, self.house_size_norm, self.lot_size_norm,
+        #      self.n_bedrooms_norm, self.resid_norm) = parcel_chars[EU_V2_CHARS]
+        #     # Get probability of experiencing one or more floods during residence
+        #     self.P_floods = self.n_flood_prob()
 
-        elif util_method.startswith("PT"):
-            (self.age_norm, self.house_size_norm, self.lot_size_norm,
-             self.n_bedrooms_norm, self.resid_norm) = parcel_chars[PT_CHARS]
-            # Get probability of experiencing one or more floods during residence
-            self.P_floods = self.n_flood_prob()
+        # elif util_method.startswith("PT"):
+        #     (self.age_norm, self.house_size_norm, self.lot_size_norm,
+        #      self.n_bedrooms_norm, self.resid_norm) = parcel_chars[PT_CHARS]
+        #     # Get probability of experiencing one or more floods during residence
+        #     self.P_floods = self.n_flood_prob()
         else:
             raise ValueError("Invalid buyer utility method. Please specify "
                              "'EU_v1', 'EU_v2', 'PTnull', 'PT0', 'PT1' or 'PT3'")
@@ -116,21 +117,22 @@ class Parcel():
 
         if method == "Regression":
             # Return relevant property characteristics for regression
-            prop_chars = [self.n_bedrooms, self.n_bedrooms**2,
+            prop_chars = [self.n_rooms,
                           self.age, self.age**2,
-                          self.house_size, 1e-4*self.house_size**2,
-                          self.lot_size, self.lot_size**2, 
+                          self.house_size, self.house_size**2,
+                          self.lot_size, self.lot_size**2,
+                          self.in_quality, self.parking, 
                           self.dflood_100,
                           np.log(self.dist_amen),
                           np.log(self.dist_CBD)]
         
-        elif method == "Regression kriging":
-            # Return relevant property characteristics for regression kriging
-            prop_chars = [self.age,
-                          np.log(self.house_size),
-                          np.log(self.lot_size),
-                          self.n_bedrooms,
-                          np.ceil(self.flood_prob)]
+        # elif method == "Regression kriging":
+        #     # Return relevant property characteristics for regression kriging
+        #     prop_chars = [self.age,
+        #                   np.log(self.house_size),
+        #                   np.log(self.lot_size),
+        #                   self.n_bedrooms,
+        #                   np.ceil(self.flood_prob)]
 
         else:
             raise ValueError("Invalid price estimation method")
